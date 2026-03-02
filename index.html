@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fondamentaux SQL</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- MODAL SELECT -->
+<div class="modal-overlay" id="modal-select">
+  <div class="modal cyan">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <span class="modal-keyword">SELECT</span>
+        <span class="modal-badge">Lecture</span>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-select')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-intro"><code>SELECT</code> est la requête la plus utilisée en SQL. Elle permet de lire des données depuis une ou plusieurs tables, avec la possibilité de filtrer, trier, grouper et paginer les résultats.</p>
+      <div class="syntax-block">
+        <div class="syntax-label">Syntaxe complète</div>
+        <div class="syntax-code">
+<span class="kw">SELECT</span> [DISTINCT] colonnes | *<br>
+<span class="kw">FROM</span>     table<br>
+[<span class="kw">WHERE</span>    condition]<br>
+[<span class="kw">GROUP BY</span> colonne]<br>
+[<span class="kw">HAVING</span>   condition_sur_agrégat]<br>
+[<span class="kw">ORDER BY</span> colonne [ASC | DESC]]<br>
+[<span class="kw">LIMIT</span>    n <span class="kw">OFFSET</span> m];
+        </div>
+      </div>
+      <div class="examples-title">// Exemples d'utilisation</div>
+      <div class="example-item">
+        <div class="example-desc">📋 Toutes les colonnes d'une table</div>
+        <div class="example-code"><span class="kw">SELECT</span> * <span class="kw">FROM</span> employes;</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">🔍 Filtrer avec WHERE et plusieurs conditions</div>
+        <div class="example-code">
+<span class="kw">SELECT</span> nom, prenom, salaire
+<span class="kw">FROM</span>   employes
+<span class="kw">WHERE</span>  departement = <span class="str">'Marketing'</span>
+  <span class="kw">AND</span>  salaire <span class="kw">BETWEEN</span> <span class="num">30000</span> <span class="kw">AND</span> <span class="num">60000</span>;</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">🔠 Recherche partielle avec LIKE</div>
+        <div class="example-code">
+<span class="kw">SELECT</span> nom, email
+<span class="kw">FROM</span>   clients
+<span class="kw">WHERE</span>  email <span class="kw">LIKE</span> <span class="str">'%@gmail.com'</span>
+  <span class="kw">OR</span>   nom   <span class="kw">LIKE</span> <span class="str">'Mar%'</span>;</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">📊 Trier, paginer et éliminer les doublons</div>
+        <div class="example-code">
+<span class="cm">-- 10 produits les plus chers, page 3</span>
+<span class="kw">SELECT DISTINCT</span> categorie, prix, nom_produit
+<span class="kw">FROM</span>   produits
+<span class="kw">WHERE</span>  stock > <span class="num">0</span>
+<span class="kw">ORDER BY</span> prix <span class="kw">DESC</span>
+<span class="kw">LIMIT</span>  <span class="num">10</span> <span class="kw">OFFSET</span> <span class="num">20</span>;</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">🔢 Filtrer avec une liste de valeurs (IN)</div>
+        <div class="example-code">
+<span class="kw">SELECT</span> nom, ville, pays
+<span class="kw">FROM</span>   clients
+<span class="kw">WHERE</span>  pays <span class="kw">IN</span> (<span class="str">'France'</span>, <span class="str">'Belgique'</span>, <span class="str">'Suisse'</span>)
+  <span class="kw">AND</span>  ville <span class="kw">IS NOT NULL</span>;</div>
+      </div>
+      <div class="tips-grid">
+        <div class="tip"><div class="tip-icon">⚡</div><div class="tip-text"><strong>Performance</strong> — Évitez <code>SELECT *</code> en production. Listez uniquement les colonnes nécessaires pour réduire le trafic réseau.</div></div>
+        <div class="tip"><div class="tip-icon">🎯</div><div class="tip-text"><strong>HAVING vs WHERE</strong> — <code>WHERE</code> filtre avant l'agrégation, <code>HAVING</code> filtre les groupes après <code>GROUP BY</code>.</div></div>
+        <div class="tip"><div class="tip-icon">📄</div><div class="tip-text"><strong>Pagination</strong> — <code>LIMIT n OFFSET m</code> avec <code>OFFSET = (page - 1) × n</code> pour naviguer dans les résultats.</div></div>
+        <div class="tip"><div class="tip-icon">🚫</div><div class="tip-text"><strong>NULL</strong> — Pour tester une valeur nulle, utilisez <code>IS NULL</code> ou <code>IS NOT NULL</code>, jamais <code>= NULL</code>.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL INSERT -->
+<div class="modal-overlay" id="modal-insert">
+  <div class="modal orange">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <span class="modal-keyword">INSERT INTO</span>
+        <span class="modal-badge">Création</span>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-insert')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-intro"><code>INSERT INTO</code> ajoute une ou plusieurs nouvelles lignes dans une table. Les valeurs doivent respecter les contraintes définies (types, NOT NULL, clés étrangères…).</p>
+      <div class="syntax-block">
+        <div class="syntax-label">Syntaxe complète</div>
+        <div class="syntax-code">
+<span class="cm">-- Insertion explicite (recommandée)</span>
+<span class="kw">INSERT INTO</span> table (col1, col2, col3)
+<span class="kw">VALUES</span> (val1, val2, val3);
+
+<span class="cm">-- Insertion multiple (plus performant)</span>
+<span class="kw">INSERT INTO</span> table (col1, col2)
+<span class="kw">VALUES</span> (v1, v2), (v3, v4), (v5, v6);
+
+<span class="cm">-- Insertion depuis un SELECT</span>
+<span class="kw">INSERT INTO</span> table (col1, col2)
+<span class="kw">SELECT</span> col1, col2 <span class="kw">FROM</span> autre_table;</div>
+      </div>
+      <div class="examples-title">// Exemples d'utilisation</div>
+      <div class="example-item">
+        <div class="example-desc">➕ Insérer un enregistrement complet</div>
+        <div class="example-code">
+<span class="kw">INSERT INTO</span> employes (nom, prenom, departement, salaire, date_embauche)
+<span class="kw">VALUES</span> (<span class="str">'Dupont'</span>, <span class="str">'Marie'</span>, <span class="str">'RH'</span>, <span class="num">38000</span>, <span class="str">'2024-03-15'</span>);</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">📦 Insérer plusieurs lignes en une seule requête</div>
+        <div class="example-code">
+<span class="kw">INSERT INTO</span> produits (nom, categorie, prix, stock)
+<span class="kw">VALUES</span>
+  (<span class="str">'Laptop Pro'</span>,      <span class="str">'Informatique'</span>,  <span class="num">1299.99</span>, <span class="num">50</span>),
+  (<span class="str">'Souris Sans Fil'</span>, <span class="str">'Périphériques'</span>, <span class="num">29.90</span>,   <span class="num">200</span>),
+  (<span class="str">'Clavier Méca'</span>,    <span class="str">'Périphériques'</span>, <span class="num">89.00</span>,   <span class="num">120</span>);</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">🔁 Copier des données depuis une autre table</div>
+        <div class="example-code">
+<span class="cm">-- Archiver les commandes de plus d'un an</span>
+<span class="kw">INSERT INTO</span> commandes_archives (id, client_id, montant, date_cmd)
+<span class="kw">SELECT</span> id, client_id, montant, date_cmd
+<span class="kw">FROM</span>   commandes
+<span class="kw">WHERE</span>  date_cmd < <span class="kw">DATE_SUB</span>(<span class="kw">NOW</span>(), <span class="kw">INTERVAL</span> <span class="num">1</span> <span class="kw">YEAR</span>);</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">🔄 UPSERT — Insérer ou mettre à jour si doublon</div>
+        <div class="example-code">
+<span class="cm">-- MySQL : ON DUPLICATE KEY UPDATE</span>
+<span class="kw">INSERT INTO</span> statistiques (date, visites, conversions)
+<span class="kw">VALUES</span> (<span class="str">'2024-06-01'</span>, <span class="num">1500</span>, <span class="num">45</span>)
+<span class="kw">ON DUPLICATE KEY UPDATE</span>
+  visites     = <span class="kw">VALUES</span>(visites),
+  conversions = <span class="kw">VALUES</span>(conversions);</div>
+      </div>
+      <div class="tips-grid">
+        <div class="tip"><div class="tip-icon">📋</div><div class="tip-text"><strong>Colonnes explicites</strong> — Toujours lister les colonnes dans INSERT. Si la structure change, vos requêtes resteront valides.</div></div>
+        <div class="tip"><div class="tip-icon">⚡</div><div class="tip-text"><strong>Bulk insert</strong> — Un INSERT multi-valeurs est bien plus rapide que plusieurs INSERT individuels (moins d'allers-retours réseau).</div></div>
+        <div class="tip"><div class="tip-icon">🔑</div><div class="tip-text"><strong>AUTO_INCREMENT</strong> — Ne pas spécifier la colonne PK auto-incrémentée, la base de données s'en charge automatiquement.</div></div>
+        <div class="tip"><div class="tip-icon">🛡️</div><div class="tip-text"><strong>Injection SQL</strong> — En application, utilisez des requêtes préparées (<code>?</code> ou <code>:param</code>), jamais de concaténation de chaînes.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL UPDATE -->
+<div class="modal-overlay" id="modal-update">
+  <div class="modal green">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <span class="modal-keyword">UPDATE</span>
+        <span class="modal-badge">Modification</span>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-update')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-intro"><code>UPDATE</code> modifie les valeurs de colonnes dans des lignes existantes. <strong>Sans clause WHERE, toutes les lignes de la table sont modifiées</strong> — toujours vérifier avant d'exécuter.</p>
+      <div class="syntax-block">
+        <div class="syntax-label">Syntaxe complète</div>
+        <div class="syntax-code">
+<span class="kw">UPDATE</span> table
+<span class="kw">SET</span>    col1 = val1,
+       col2 = val2,
+       col3 = col3 + <span class="num">1</span>   <span class="cm">-- calcul sur valeur existante</span>
+<span class="kw">WHERE</span>  condition;    <span class="cm">-- ⚠️ NE PAS OUBLIER !</span></div>
+      </div>
+      <div class="examples-title">// Exemples d'utilisation</div>
+      <div class="example-item">
+        <div class="example-desc">✏️ Mettre à jour un enregistrement précis</div>
+        <div class="example-code">
+<span class="kw">UPDATE</span> employes
+<span class="kw">SET</span>    email     = <span class="str">'<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="cca2a3b9baa9adb98ca9a1ada5a0e2afa3a1">[email&#160;protected]</a>'</span>,
+       telephone = <span class="str">'06 12 34 56 78'</span>
+<span class="kw">WHERE</span>  id = <span class="num">42</span>;</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">💰 Augmentation salariale conditionnelle</div>
+        <div class="example-code">
+<span class="cm">-- +8% pour les employés IT avec 3+ ans d'ancienneté</span>
+<span class="kw">UPDATE</span> employes
+<span class="kw">SET</span>    salaire               = salaire * <span class="num">1.08</span>,
+       derniere_augmentation = <span class="kw">CURDATE</span>()
+<span class="kw">WHERE</span>  departement = <span class="str">'IT'</span>
+  <span class="kw">AND</span>  anciennete_annees >= <span class="num">3</span>;</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">🔁 UPDATE basé sur une sous-requête</div>
+        <div class="example-code">
+<span class="cm">-- Suspendre les commandes des clients inactifs</span>
+<span class="kw">UPDATE</span> commandes
+<span class="kw">SET</span>    statut = <span class="str">'suspendue'</span>
+<span class="kw">WHERE</span>  client_id <span class="kw">IN</span> (
+  <span class="kw">SELECT</span> id <span class="kw">FROM</span> clients <span class="kw">WHERE</span> actif = <span class="num">0</span>
+);</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">🔄 UPDATE conditionnel avec CASE</div>
+        <div class="example-code">
+<span class="kw">UPDATE</span> produits
+<span class="kw">SET</span>    disponibilite = <span class="kw">CASE</span>
+  <span class="kw">WHEN</span> stock = <span class="num">0</span>  <span class="kw">THEN</span> <span class="str">'rupture'</span>
+  <span class="kw">WHEN</span> stock < <span class="num">10</span> <span class="kw">THEN</span> <span class="str">'faible'</span>
+  <span class="kw">ELSE</span>               <span class="str">'disponible'</span>
+<span class="kw">END</span>;</div>
+      </div>
+      <div class="tips-grid">
+        <div class="tip"><div class="tip-icon">⚠️</div><div class="tip-text"><strong>Tester d'abord</strong> — Avant un UPDATE, exécutez un SELECT avec la même condition pour voir les lignes qui seront modifiées.</div></div>
+        <div class="tip"><div class="tip-icon">💾</div><div class="tip-text"><strong>Transaction</strong> — Encadrez vos UPDATE dans <code>BEGIN … COMMIT</code> pour pouvoir annuler avec <code>ROLLBACK</code> en cas d'erreur.</div></div>
+        <div class="tip"><div class="tip-icon">🔐</div><div class="tip-text"><strong>Vérification</strong> — Utilisez <code>ROW_COUNT()</code> après l'UPDATE pour vérifier le nombre de lignes réellement modifiées.</div></div>
+        <div class="tip"><div class="tip-icon">🕒</div><div class="tip-text"><strong>Timestamp auto</strong> — Définissez <code>updated_at … ON UPDATE CURRENT_TIMESTAMP</code> pour tracer automatiquement les modifications.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DELETE -->
+<div class="modal-overlay" id="modal-delete">
+  <div class="modal purple">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <span class="modal-keyword">DELETE</span>
+        <span class="modal-badge">Suppression</span>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-delete')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-intro"><code>DELETE</code> supprime des lignes de façon permanente. Sans <code>WHERE</code>, toute la table est vidée. Pour réinitialiser une table entière, préférez <code>TRUNCATE</code> qui est plus rapide et remet l'auto-increment à zéro.</p>
+      <div class="syntax-block">
+        <div class="syntax-label">Syntaxe complète</div>
+        <div class="syntax-code">
+<span class="kw">DELETE FROM</span> table
+<span class="kw">WHERE</span> condition;    <span class="cm">-- ⚠️ INDISPENSABLE !</span>
+
+<span class="cm">-- Vider toute la table (plus rapide, non loggé)</span>
+<span class="kw4">TRUNCATE TABLE</span> table;</div>
+      </div>
+      <div class="examples-title">// Exemples d'utilisation</div>
+      <div class="example-item">
+        <div class="example-desc">🗑️ Supprimer une ligne précise</div>
+        <div class="example-code">
+<span class="kw">DELETE FROM</span> employes
+<span class="kw">WHERE</span> id = <span class="num">42</span>;</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">🧹 Supprimer des enregistrements anciens</div>
+        <div class="example-code">
+<span class="cm">-- Purger les logs de plus de 90 jours</span>
+<span class="kw">DELETE FROM</span> logs_application
+<span class="kw">WHERE</span> created_at < <span class="kw">DATE_SUB</span>(<span class="kw">NOW</span>(), <span class="kw">INTERVAL</span> <span class="num">90</span> <span class="kw">DAY</span>);</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">🔗 Supprimer avec une sous-requête</div>
+        <div class="example-code">
+<span class="cm">-- Commandes orphelines (client supprimé)</span>
+<span class="kw">DELETE FROM</span> commandes
+<span class="kw">WHERE</span> client_id <span class="kw">NOT IN</span> (
+  <span class="kw">SELECT</span> id <span class="kw">FROM</span> clients
+);</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">🔄 Supprimer les doublons, garder le plus récent</div>
+        <div class="example-code">
+<span class="kw">DELETE FROM</span> abonnements
+<span class="kw">WHERE</span> id <span class="kw">NOT IN</span> (
+  <span class="kw">SELECT</span> <span class="kw">MAX</span>(id)
+  <span class="kw">FROM</span>   abonnements
+  <span class="kw">GROUP BY</span> email
+);</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">⚡ TRUNCATE — Vider et réinitialiser une table</div>
+        <div class="example-code">
+<span class="cm">-- Réinitialise aussi l'AUTO_INCREMENT à 1</span>
+<span class="kw4">TRUNCATE TABLE</span> cache_sessions;</div>
+      </div>
+      <div class="tips-grid">
+        <div class="tip"><div class="tip-icon">🔍</div><div class="tip-text"><strong>Tester avant</strong> — Exécutez <code>SELECT * FROM table WHERE …</code> avec la même condition pour voir ce qui sera supprimé.</div></div>
+        <div class="tip"><div class="tip-icon">↩️</div><div class="tip-text"><strong>ROLLBACK</strong> — <code>DELETE</code> dans une transaction peut être annulé. <code>TRUNCATE</code> est irréversible dans la plupart des SGBD.</div></div>
+        <div class="tip"><div class="tip-icon">🔗</div><div class="tip-text"><strong>CASCADE</strong> — Avec <code>ON DELETE CASCADE</code> sur une FK, supprimer un parent supprime automatiquement ses lignes enfants.</div></div>
+        <div class="tip"><div class="tip-icon">🛡️</div><div class="tip-text"><strong>Soft delete</strong> — En prod, préférez un flag <code>deleted_at TIMESTAMP</code> plutôt qu'une vraie suppression pour garder l'historique.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL INNER JOIN -->
+<div class="modal-overlay" id="modal-inner">
+  <div class="modal cyan">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <span class="modal-keyword">INNER JOIN</span>
+        <span class="modal-badge">Intersection</span>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-inner')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-intro"><code>INNER JOIN</code> retourne uniquement les lignes qui ont une correspondance dans les deux tables. C'est le type de jointure le plus courant — si une ligne n'a pas de correspondance de l'autre côté, elle est exclue du résultat.</p>
+      <div class="syntax-block">
+        <div class="syntax-label">Syntaxe</div>
+        <div class="syntax-code">
+<span class="kw">SELECT</span> t1.col, t2.col<br>
+<span class="kw">FROM</span>   table1 t1<br>
+<span class="kw">INNER JOIN</span> table2 t2 <span class="kw">ON</span> t1.id = t2.fk_id;<br><br>
+<span class="cm">-- INNER est optionnel : JOIN seul = INNER JOIN</span>
+<span class="kw">FROM</span> table1 t1 <span class="kw">JOIN</span> table2 t2 <span class="kw">ON</span> t1.id = t2.fk_id;</div>
+      </div>
+      <div class="examples-title">// Exemples d'utilisation</div>
+      <div class="example-item">
+        <div class="example-desc">🔗 Commandes avec les informations client</div>
+        <div class="example-code">
+<span class="kw">SELECT</span> c.nom, c.email, cmd.date_commande, cmd.montant
+<span class="kw">FROM</span>   clients c
+<span class="kw">INNER JOIN</span> commandes cmd <span class="kw">ON</span> c.id = cmd.client_id;</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">🛒 Détail des lignes de commande avec nom du produit</div>
+        <div class="example-code">
+<span class="kw">SELECT</span> cmd.id, p.nom_produit, lc.quantite, p.prix * lc.quantite <span class="kw">AS</span> sous_total
+<span class="kw">FROM</span>   lignes_cmd lc
+<span class="kw">INNER JOIN</span> produits p   <span class="kw">ON</span> lc.produit_id = p.id
+<span class="kw">INNER JOIN</span> commandes cmd <span class="kw">ON</span> lc.commande_id = cmd.id
+<span class="kw">WHERE</span>  cmd.statut = <span class="str">'confirmee'</span>;</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">📊 Employés et leur département (seulement si affectés)</div>
+        <div class="example-code">
+<span class="kw">SELECT</span> e.nom, e.prenom, d.nom_dept, d.budget
+<span class="kw">FROM</span>   employes e
+<span class="kw">INNER JOIN</span> departements d <span class="kw">ON</span> e.dept_id = d.id
+<span class="kw">ORDER BY</span> d.nom_dept, e.nom;</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">🏷️ Produits ayant au moins une commande (avec agrégat)</div>
+        <div class="example-code">
+<span class="kw">SELECT</span> p.nom_produit, <span class="kw">COUNT</span>(lc.id) <span class="kw">AS</span> nb_commandes, <span class="kw">SUM</span>(lc.quantite) <span class="kw">AS</span> qte_totale
+<span class="kw">FROM</span>   produits p
+<span class="kw">INNER JOIN</span> lignes_cmd lc <span class="kw">ON</span> p.id = lc.produit_id
+<span class="kw">GROUP BY</span> p.id
+<span class="kw">ORDER BY</span> qte_totale <span class="kw">DESC</span>;</div>
+      </div>
+      <div class="tips-grid">
+        <div class="tip"><div class="tip-icon">🎯</div><div class="tip-text"><strong>Filtre implicite</strong> — INNER JOIN exclut automatiquement les lignes sans correspondance. Utile pour garantir l'intégrité des données retournées.</div></div>
+        <div class="tip"><div class="tip-icon">🔗</div><div class="tip-text"><strong>Jointures multiples</strong> — On peut chaîner autant de INNER JOIN que nécessaire. Chaque JOIN ajoute une table à la requête.</div></div>
+        <div class="tip"><div class="tip-icon">⚡</div><div class="tip-text"><strong>Index</strong> — Indexez toujours les colonnes utilisées dans les clauses ON pour de meilleures performances sur les grandes tables.</div></div>
+        <div class="tip"><div class="tip-icon">📝</div><div class="tip-text"><strong>Alias</strong> — Utilisez des alias courts (ex: <code>c</code> pour clients) pour rendre les requêtes avec plusieurs jointures plus lisibles.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL LEFT JOIN -->
+<div class="modal-overlay" id="modal-left">
+  <div class="modal orange">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <span class="modal-keyword">LEFT JOIN</span>
+        <span class="modal-badge">Table gauche complète</span>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-left')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-intro"><code>LEFT JOIN</code> retourne toutes les lignes de la table de gauche, et les lignes correspondantes de la table de droite. Si aucune correspondance n'existe à droite, les colonnes de droite sont remplies de <code>NULL</code>.</p>
+      <div class="syntax-block">
+        <div class="syntax-label">Syntaxe</div>
+        <div class="syntax-code">
+<span class="kw">SELECT</span> t1.col, t2.col<br>
+<span class="kw">FROM</span>   table1 t1<br>
+<span class="kw">LEFT JOIN</span> table2 t2 <span class="kw">ON</span> t1.id = t2.fk_id;<br><br>
+<span class="cm">-- LEFT OUTER JOIN est équivalent</span></div>
+      </div>
+      <div class="examples-title">// Exemples d'utilisation</div>
+      <div class="example-item">
+        <div class="example-desc">👥 Tous les clients, même ceux sans commande</div>
+        <div class="example-code">
+<span class="kw">SELECT</span> c.nom, c.email, <span class="kw">COUNT</span>(cmd.id) <span class="kw">AS</span> nb_commandes
+<span class="kw">FROM</span>   clients c
+<span class="kw">LEFT JOIN</span> commandes cmd <span class="kw">ON</span> c.id = cmd.client_id
+<span class="kw">GROUP BY</span> c.id;</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">🔍 Trouver les lignes sans correspondance (anti-join)</div>
+        <div class="example-code">
+<span class="cm">-- Clients n'ayant jamais passé de commande</span>
+<span class="kw">SELECT</span> c.nom, c.email
+<span class="kw">FROM</span>   clients c
+<span class="kw">LEFT JOIN</span> commandes cmd <span class="kw">ON</span> c.id = cmd.client_id
+<span class="kw">WHERE</span>  cmd.id <span class="kw">IS NULL</span>;</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">📦 Produits avec leur catégorie (optionnelle)</div>
+        <div class="example-code">
+<span class="kw">SELECT</span> p.nom_produit, p.prix,
+       <span class="kw">COALESCE</span>(cat.libelle, <span class="str">'Non classé'</span>) <span class="kw">AS</span> categorie
+<span class="kw">FROM</span>   produits p
+<span class="kw">LEFT JOIN</span> categories cat <span class="kw">ON</span> p.categorie_id = cat.id;</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">📅 Employés avec leur dernière évaluation (si elle existe)</div>
+        <div class="example-code">
+<span class="kw">SELECT</span> e.nom, e.prenom, ev.note, ev.date_eval
+<span class="kw">FROM</span>   employes e
+<span class="kw">LEFT JOIN</span> evaluations ev
+  <span class="kw">ON</span> e.id = ev.employe_id
+  <span class="kw">AND</span> ev.date_eval = (
+    <span class="kw">SELECT MAX</span>(date_eval) <span class="kw">FROM</span> evaluations
+    <span class="kw">WHERE</span> employe_id = e.id
+  );</div>
+      </div>
+      <div class="tips-grid">
+        <div class="tip"><div class="tip-icon">🚫</div><div class="tip-text"><strong>NULL à droite</strong> — Quand il n'y a pas de correspondance, toutes les colonnes de la table droite valent NULL. Utilisez <code>IS NULL</code> pour les détecter.</div></div>
+        <div class="tip"><div class="tip-icon">🔄</div><div class="tip-text"><strong>Anti-join</strong> — La combinaison <code>LEFT JOIN … WHERE droite.id IS NULL</code> est le pattern classique pour trouver les lignes sans correspondance.</div></div>
+        <div class="tip"><div class="tip-icon">🛠️</div><div class="tip-text"><strong>COALESCE</strong> — Utilisez <code>COALESCE(col, valeur_defaut)</code> pour remplacer les NULL par une valeur lisible dans les résultats.</div></div>
+        <div class="tip"><div class="tip-icon">📊</div><div class="tip-text"><strong>COUNT avec NULL</strong> — <code>COUNT(*)</code> compte les NULL, <code>COUNT(col)</code> les ignore. Important quand on compte des lignes de la table droite.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RIGHT JOIN -->
+<div class="modal-overlay" id="modal-right">
+  <div class="modal green">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <span class="modal-keyword">RIGHT JOIN</span>
+        <span class="modal-badge">Table droite complète</span>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-right')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-intro"><code>RIGHT JOIN</code> est le symétrique du LEFT JOIN : toutes les lignes de la table de droite sont conservées, même sans correspondance à gauche. En pratique, un <code>RIGHT JOIN</code> peut toujours être réécrit en <code>LEFT JOIN</code> en inversant l'ordre des tables.</p>
+      <div class="syntax-block">
+        <div class="syntax-label">Syntaxe et équivalence</div>
+        <div class="syntax-code">
+<span class="kw">SELECT</span> t1.col, t2.col<br>
+<span class="kw">FROM</span>   table1 t1<br>
+<span class="kw">RIGHT JOIN</span> table2 t2 <span class="kw">ON</span> t1.fk_id = t2.id;<br><br>
+<span class="cm">-- Équivalent avec LEFT JOIN (ordre inversé) :</span>
+<span class="kw">FROM</span>   table2 t2 <span class="kw">LEFT JOIN</span> table1 t1 <span class="kw">ON</span> t1.fk_id = t2.id;</div>
+      </div>
+      <div class="examples-title">// Exemples d'utilisation</div>
+      <div class="example-item">
+        <div class="example-desc">🏢 Tous les départements, même sans employés</div>
+        <div class="example-code">
+<span class="kw">SELECT</span> d.nom_dept, <span class="kw">COUNT</span>(e.id) <span class="kw">AS</span> nb_employes
+<span class="kw">FROM</span>   employes e
+<span class="kw">RIGHT JOIN</span> departements d <span class="kw">ON</span> e.dept_id = d.id
+<span class="kw">GROUP BY</span> d.id;</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">📋 Toutes les catégories, avec ou sans produits</div>
+        <div class="example-code">
+<span class="kw">SELECT</span> cat.libelle, <span class="kw">COUNT</span>(p.id) <span class="kw">AS</span> nb_produits
+<span class="kw">FROM</span>   produits p
+<span class="kw">RIGHT JOIN</span> categories cat <span class="kw">ON</span> p.categorie_id = cat.id
+<span class="kw">GROUP BY</span> cat.id
+<span class="kw">ORDER BY</span> nb_produits <span class="kw">DESC</span>;</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">🔄 Réécriture en LEFT JOIN (recommandée)</div>
+        <div class="example-code">
+<span class="cm">-- RIGHT JOIN (moins lisible)</span>
+<span class="kw">SELECT</span> d.nom_dept, e.nom
+<span class="kw">FROM</span>   employes e <span class="kw">RIGHT JOIN</span> departements d <span class="kw">ON</span> e.dept_id = d.id;
+
+<span class="cm">-- ✓ LEFT JOIN équivalent (préféré)</span>
+<span class="kw">SELECT</span> d.nom_dept, e.nom
+<span class="kw">FROM</span>   departements d <span class="kw">LEFT JOIN</span> employes e <span class="kw">ON</span> e.dept_id = d.id;</div>
+      </div>
+      <div class="tips-grid">
+        <div class="tip"><div class="tip-icon">↩️</div><div class="tip-text"><strong>Préférez LEFT JOIN</strong> — La plupart des développeurs réécrivent les RIGHT JOIN en LEFT JOIN pour uniformiser le sens de lecture (de gauche à droite).</div></div>
+        <div class="tip"><div class="tip-icon">🔑</div><div class="tip-text"><strong>Table de référence à droite</strong> — RIGHT JOIN est utile quand la table principale (celle dont on veut toutes les lignes) est définie après un JOIN déjà écrit.</div></div>
+        <div class="tip"><div class="tip-icon">🔍</div><div class="tip-text"><strong>Départements vides</strong> — Cas typique : lister tous les éléments d'un référentiel (catégories, tags, statuts) même s'ils n'ont pas encore de données associées.</div></div>
+        <div class="tip"><div class="tip-icon">📊</div><div class="tip-text"><strong>FULL OUTER JOIN</strong> — Pour conserver toutes les lignes des deux côtés, utilisez <code>FULL OUTER JOIN</code> (ou <code>UNION</code> de LEFT + RIGHT en MySQL).</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL COUNT -->
+<div class="modal-overlay" id="modal-count">
+  <div class="modal green">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <span class="modal-keyword">COUNT()</span>
+        <span class="modal-badge">Agrégation</span>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-count')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-intro"><code>COUNT()</code> compte le nombre de lignes ou de valeurs non-NULL dans un ensemble. C'est la fonction d'agrégation la plus polyvalente, utilisable avec ou sans <code>GROUP BY</code>.</p>
+      <div class="syntax-block">
+        <div class="syntax-label">Variantes</div>
+        <div class="syntax-code">
+<span class="kw3">COUNT</span>(*)          <span class="cm">-- toutes les lignes (y compris NULL)</span>
+<span class="kw3">COUNT</span>(colonne)    <span class="cm">-- lignes où colonne n'est pas NULL</span>
+<span class="kw3">COUNT</span>(<span class="kw">DISTINCT</span> col) <span class="cm">-- valeurs uniques non-NULL</span></div>
+      </div>
+      <div class="examples-title">// Exemples d'utilisation</div>
+      <div class="example-item">
+        <div class="example-desc">🔢 Compter toutes les lignes d'une table</div>
+        <div class="example-code">
+<span class="kw">SELECT</span> <span class="kw3">COUNT</span>(*) <span class="kw">AS</span> total_employes <span class="kw">FROM</span> employes;</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">📊 Compter par groupe</div>
+        <div class="example-code">
+<span class="kw">SELECT</span> departement, <span class="kw3">COUNT</span>(*) <span class="kw">AS</span> nb_employes
+<span class="kw">FROM</span>   employes
+<span class="kw">GROUP BY</span> departement
+<span class="kw">ORDER BY</span> nb_employes <span class="kw">DESC</span>;</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">🎯 Compter les valeurs distinctes</div>
+        <div class="example-code">
+<span class="kw">SELECT</span>
+  <span class="kw3">COUNT</span>(*)             <span class="kw">AS</span> total_commandes,
+  <span class="kw3">COUNT</span>(DISTINCT client_id) <span class="kw">AS</span> clients_uniques
+<span class="kw">FROM</span> commandes;</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">🔍 Filtrer les groupes avec HAVING</div>
+        <div class="example-code">
+<span class="cm">-- Départements avec plus de 10 employés</span>
+<span class="kw">SELECT</span> departement, <span class="kw3">COUNT</span>(*) <span class="kw">AS</span> nb
+<span class="kw">FROM</span>   employes
+<span class="kw">GROUP BY</span> departement
+<span class="kw">HAVING</span> <span class="kw3">COUNT</span>(*) > <span class="num">10</span>;</div>
+      </div>
+      <div class="tips-grid">
+        <div class="tip"><div class="tip-icon">❗</div><div class="tip-text"><strong>COUNT(*) vs COUNT(col)</strong> — <code>COUNT(*)</code> compte toutes les lignes. <code>COUNT(col)</code> ignore les NULL — résultats différents si la colonne contient des NULL.</div></div>
+        <div class="tip"><div class="tip-icon">🔢</div><div class="tip-text"><strong>DISTINCT</strong> — <code>COUNT(DISTINCT col)</code> est très utile pour compter des entités uniques comme des clients ou des produits.</div></div>
+        <div class="tip"><div class="tip-icon">⚡</div><div class="tip-text"><strong>Performance</strong> — <code>COUNT(*)</code> est souvent plus rapide que <code>COUNT(col)</code> car il n'a pas à vérifier les NULL sur chaque ligne.</div></div>
+        <div class="tip"><div class="tip-icon">🎯</div><div class="tip-text"><strong>HAVING</strong> — N'utilisez jamais <code>WHERE COUNT(*) > n</code> : c'est invalide. Utilisez <code>HAVING COUNT(*) > n</code> pour filtrer après agrégation.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SUM -->
+<div class="modal-overlay" id="modal-sum">
+  <div class="modal green">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <span class="modal-keyword">SUM()</span>
+        <span class="modal-badge">Agrégation</span>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-sum')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-intro"><code>SUM()</code> calcule la somme de toutes les valeurs numériques d'une colonne. Les valeurs NULL sont ignorées. Combinée avec <code>GROUP BY</code>, elle permet des totaux par catégorie.</p>
+      <div class="syntax-block">
+        <div class="syntax-label">Syntaxe</div>
+        <div class="syntax-code">
+<span class="kw3">SUM</span>(colonne_numerique)<br>
+<span class="kw3">SUM</span>(<span class="kw">DISTINCT</span> colonne) <span class="cm">-- somme des valeurs uniques</span><br>
+<span class="kw3">SUM</span>(condition)        <span class="cm">-- ex: SUM(prix > 100) = nb de lignes vraies</span></div>
+      </div>
+      <div class="examples-title">// Exemples d'utilisation</div>
+      <div class="example-item">
+        <div class="example-desc">💰 Chiffre d'affaires total</div>
+        <div class="example-code">
+<span class="kw">SELECT</span> <span class="kw3">SUM</span>(montant) <span class="kw">AS</span> ca_total <span class="kw">FROM</span> commandes
+<span class="kw">WHERE</span>  statut = <span class="str">'payee'</span>;</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">📅 CA mensuel sur l'année en cours</div>
+        <div class="example-code">
+<span class="kw">SELECT</span> <span class="kw">MONTH</span>(date_cmd) <span class="kw">AS</span> mois, <span class="kw3">SUM</span>(montant) <span class="kw">AS</span> ca_mensuel
+<span class="kw">FROM</span>   commandes
+<span class="kw">WHERE</span>  <span class="kw">YEAR</span>(date_cmd) = <span class="kw">YEAR</span>(<span class="kw">CURDATE</span>())
+<span class="kw">GROUP BY</span> mois <span class="kw">ORDER BY</span> mois;</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">🏷️ Masse salariale par département</div>
+        <div class="example-code">
+<span class="kw">SELECT</span> departement,
+       <span class="kw3">SUM</span>(salaire)            <span class="kw">AS</span> masse_salariale,
+       <span class="kw3">SUM</span>(salaire) / <span class="kw">COUNT</span>(*) <span class="kw">AS</span> salaire_moyen
+<span class="kw">FROM</span>   employes
+<span class="kw">GROUP BY</span> departement;</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">✅ Compter des conditions (astuce booléenne)</div>
+        <div class="example-code">
+<span class="cm">-- MySQL : TRUE = 1, FALSE = 0</span>
+<span class="kw">SELECT</span>
+  <span class="kw3">SUM</span>(salaire > <span class="num">50000</span>) <span class="kw">AS</span> hauts_salaires,
+  <span class="kw3">SUM</span>(salaire <= <span class="num">50000</span>) <span class="kw">AS</span> autres
+<span class="kw">FROM</span> employes;</div>
+      </div>
+      <div class="tips-grid">
+        <div class="tip"><div class="tip-icon">🚫</div><div class="tip-text"><strong>NULL ignorés</strong> — <code>SUM()</code> ignore les NULL. Si toutes les valeurs sont NULL, le résultat est NULL (pas 0). Utilisez <code>COALESCE(SUM(col), 0)</code> si nécessaire.</div></div>
+        <div class="tip"><div class="tip-icon">💡</div><div class="tip-text"><strong>Astuce booléenne</strong> — <code>SUM(condition)</code> compte les lignes qui vérifient une condition, car TRUE vaut 1 et FALSE vaut 0 en SQL.</div></div>
+        <div class="tip"><div class="tip-icon">🔢</div><div class="tip-text"><strong>Types</strong> — <code>SUM()</code> fonctionne sur INT, DECIMAL, FLOAT… Évitez de l'utiliser sur des colonnes de type texte ou date.</div></div>
+        <div class="tip"><div class="tip-icon">📊</div><div class="tip-text"><strong>Totaux cumulés</strong> — Pour des sommes cumulatives, utilisez <code>SUM() OVER (ORDER BY date)</code> avec les fonctions de fenêtrage (window functions).</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AVG -->
+<div class="modal-overlay" id="modal-avg">
+  <div class="modal green">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <span class="modal-keyword">AVG()</span>
+        <span class="modal-badge">Agrégation</span>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-avg')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-intro"><code>AVG()</code> calcule la moyenne arithmétique d'une colonne numérique, en ignorant les valeurs NULL. Pour des moyennes pondérées ou conditionnelles, on la combine avec <code>CASE</code> ou des sous-requêtes.</p>
+      <div class="syntax-block">
+        <div class="syntax-label">Syntaxe</div>
+        <div class="syntax-code">
+<span class="kw3">AVG</span>(colonne)              <span class="cm">-- moyenne simple</span>
+<span class="kw3">AVG</span>(<span class="kw">DISTINCT</span> colonne)     <span class="cm">-- moyenne des valeurs uniques</span>
+<span class="kw">ROUND</span>(<span class="kw3">AVG</span>(colonne), <span class="num">2</span>)  <span class="cm">-- arrondi à 2 décimales</span></div>
+      </div>
+      <div class="examples-title">// Exemples d'utilisation</div>
+      <div class="example-item">
+        <div class="example-desc">📊 Salaire moyen global et par département</div>
+        <div class="example-code">
+<span class="kw">SELECT</span> departement, <span class="kw">ROUND</span>(<span class="kw3">AVG</span>(salaire), <span class="num">2</span>) <span class="kw">AS</span> salaire_moyen
+<span class="kw">FROM</span>   employes
+<span class="kw">GROUP BY</span> departement
+<span class="kw">ORDER BY</span> salaire_moyen <span class="kw">DESC</span>;</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">🎯 Note moyenne des produits avec filtre</div>
+        <div class="example-code">
+<span class="kw">SELECT</span> p.nom_produit, <span class="kw">ROUND</span>(<span class="kw3">AVG</span>(a.note), <span class="num">1</span>) <span class="kw">AS</span> note_moy,
+       <span class="kw">COUNT</span>(a.id) <span class="kw">AS</span> nb_avis
+<span class="kw">FROM</span>   produits p
+<span class="kw">LEFT JOIN</span> avis a <span class="kw">ON</span> p.id = a.produit_id
+<span class="kw">GROUP BY</span> p.id
+<span class="kw">HAVING</span> <span class="kw">COUNT</span>(a.id) >= <span class="num">5</span>;</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">🔀 Comparer à la moyenne globale</div>
+        <div class="example-code">
+<span class="cm">-- Employés gagnant plus que la moyenne du département</span>
+<span class="kw">SELECT</span> e.nom, e.salaire, moy.salaire_moyen
+<span class="kw">FROM</span>   employes e
+<span class="kw">JOIN</span>   (<span class="kw">SELECT</span> departement, <span class="kw3">AVG</span>(salaire) <span class="kw">AS</span> salaire_moyen
+        <span class="kw">FROM</span> employes <span class="kw">GROUP BY</span> departement) moy
+  <span class="kw">ON</span> e.departement = moy.departement
+<span class="kw">WHERE</span>  e.salaire > moy.salaire_moyen;</div>
+      </div>
+      <div class="tips-grid">
+        <div class="tip"><div class="tip-icon">🔢</div><div class="tip-text"><strong>Précision</strong> — Utilisez <code>ROUND(AVG(col), n)</code> pour limiter les décimales, surtout pour les montants ou pourcentages.</div></div>
+        <div class="tip"><div class="tip-icon">🚫</div><div class="tip-text"><strong>NULL ignorés</strong> — <code>AVG(col)</code> ignore les NULL, ce qui peut fausser la moyenne si les NULL représentent des zéros. Utilisez <code>AVG(COALESCE(col, 0))</code> si besoin.</div></div>
+        <div class="tip"><div class="tip-icon">⚖️</div><div class="tip-text"><strong>Moyenne pondérée</strong> — Pour une moyenne pondérée, utilisez <code>SUM(valeur * poids) / SUM(poids)</code> plutôt que AVG.</div></div>
+        <div class="tip"><div class="tip-icon">🪟</div><div class="tip-text"><strong>Window function</strong> — <code>AVG() OVER (PARTITION BY dept)</code> permet de calculer la moyenne par groupe sans GROUP BY, en gardant toutes les lignes.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MIN/MAX -->
+<div class="modal-overlay" id="modal-minmax">
+  <div class="modal green">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <span class="modal-keyword">MIN() / MAX()</span>
+        <span class="modal-badge">Agrégation</span>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-minmax')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-intro"><code>MIN()</code> et <code>MAX()</code> retournent la valeur minimale ou maximale d'une colonne. Elles fonctionnent sur les nombres, les dates et les chaînes (ordre alphabétique). Les NULL sont toujours ignorés.</p>
+      <div class="syntax-block">
+        <div class="syntax-label">Syntaxe</div>
+        <div class="syntax-code">
+<span class="kw3">MIN</span>(colonne)   <span class="cm">-- valeur la plus petite</span>
+<span class="kw3">MAX</span>(colonne)   <span class="cm">-- valeur la plus grande</span>
+<span class="cm">-- Fonctionne sur : nombres, dates, chaînes</span></div>
+      </div>
+      <div class="examples-title">// Exemples d'utilisation</div>
+      <div class="example-item">
+        <div class="example-desc">💰 Fourchette de prix par catégorie</div>
+        <div class="example-code">
+<span class="kw">SELECT</span> categorie,
+       <span class="kw3">MIN</span>(prix) <span class="kw">AS</span> prix_min,
+       <span class="kw3">MAX</span>(prix) <span class="kw">AS</span> prix_max,
+       <span class="kw3">MAX</span>(prix) - <span class="kw3">MIN</span>(prix) <span class="kw">AS</span> ecart
+<span class="kw">FROM</span>   produits <span class="kw">GROUP BY</span> categorie;</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">📅 Première et dernière commande par client</div>
+        <div class="example-code">
+<span class="kw">SELECT</span> client_id,
+       <span class="kw3">MIN</span>(date_cmd) <span class="kw">AS</span> premiere_commande,
+       <span class="kw3">MAX</span>(date_cmd) <span class="kw">AS</span> derniere_commande
+<span class="kw">FROM</span>   commandes <span class="kw">GROUP BY</span> client_id;</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">🔍 Trouver l'enregistrement extrême (sous-requête)</div>
+        <div class="example-code">
+<span class="cm">-- Produit le moins cher dans chaque catégorie</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> produits p
+<span class="kw">WHERE</span>  p.prix = (
+  <span class="kw">SELECT</span> <span class="kw3">MIN</span>(prix) <span class="kw">FROM</span> produits
+  <span class="kw">WHERE</span>  categorie = p.categorie
+);</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">🔤 MIN/MAX sur des chaînes (ordre alphabétique)</div>
+        <div class="example-code">
+<span class="cm">-- Premier et dernier client alphabétiquement</span>
+<span class="kw">SELECT</span> <span class="kw3">MIN</span>(nom) <span class="kw">AS</span> premier, <span class="kw3">MAX</span>(nom) <span class="kw">AS</span> dernier
+<span class="kw">FROM</span>   clients;</div>
+      </div>
+      <div class="tips-grid">
+        <div class="tip"><div class="tip-icon">📅</div><div class="tip-text"><strong>Dates</strong> — <code>MIN(date)</code> = date la plus ancienne, <code>MAX(date)</code> = date la plus récente. Très utile pour trouver la première/dernière occurrence.</div></div>
+        <div class="tip"><div class="tip-icon">🔗</div><div class="tip-text"><strong>Avec JOIN</strong> — Pour récupérer toute la ligne du min/max (pas juste la valeur), combinez avec une sous-requête ou un JOIN sur la valeur obtenue.</div></div>
+        <div class="tip"><div class="tip-icon">🚫</div><div class="tip-text"><strong>NULL ignorés</strong> — Si toutes les valeurs sont NULL, MIN/MAX retournent NULL. Pas d'erreur, mais à vérifier dans votre logique.</div></div>
+        <div class="tip"><div class="tip-icon">🪟</div><div class="tip-text"><strong>Window functions</strong> — <code>MIN() OVER (PARTITION BY col)</code> permet d'obtenir le min du groupe sur chaque ligne sans GROUP BY.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PRIMARY KEY -->
+<div class="modal-overlay" id="modal-pk">
+  <div class="modal orange">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <span class="modal-keyword">PRIMARY KEY</span>
+        <span class="modal-badge">Contrainte</span>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-pk')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-intro">La <code>PRIMARY KEY</code> identifie de façon unique chaque ligne d'une table. Elle combine automatiquement les contraintes <code>NOT NULL</code> et <code>UNIQUE</code>. Chaque table ne peut avoir qu'une seule clé primaire, mais elle peut porter sur plusieurs colonnes (clé composite).</p>
+      <div class="syntax-block">
+        <div class="syntax-label">Syntaxe</div>
+        <div class="syntax-code">
+<span class="cm">-- PK simple (une colonne)</span>
+id <span class="kw">INT</span> <span class="kw2">PRIMARY KEY</span> AUTO_INCREMENT,<br><br>
+<span class="cm">-- PK composite (plusieurs colonnes)</span>
+<span class="kw2">PRIMARY KEY</span> (col1, col2),<br><br>
+<span class="cm">-- Ajout après création</span>
+<span class="kw">ALTER TABLE</span> t <span class="kw">ADD PRIMARY KEY</span> (id);</div>
+      </div>
+      <div class="examples-title">// Exemples d'utilisation</div>
+      <div class="example-item">
+        <div class="example-desc">🔑 PK entière auto-incrémentée (cas le plus courant)</div>
+        <div class="example-code">
+<span class="kw">CREATE TABLE</span> utilisateurs (
+  id       <span class="kw">INT</span>          <span class="kw2">PRIMARY KEY</span> AUTO_INCREMENT,
+  username <span class="kw">VARCHAR</span>(<span class="num">50</span>) <span class="kw">NOT NULL</span>,
+  email    <span class="kw">VARCHAR</span>(<span class="num">100</span>) <span class="kw">UNIQUE NOT NULL</span>
+);</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">🔗 PK composite sur une table de liaison</div>
+        <div class="example-code">
+<span class="cm">-- Table many-to-many : un utilisateur peut avoir plusieurs rôles</span>
+<span class="kw">CREATE TABLE</span> utilisateurs_roles (
+  utilisateur_id <span class="kw">INT</span> <span class="kw">NOT NULL</span>,
+  role_id        <span class="kw">INT</span> <span class="kw">NOT NULL</span>,
+  date_attribution <span class="kw">DATE</span>,
+  <span class="kw2">PRIMARY KEY</span> (utilisateur_id, role_id)
+);</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">🆔 PK UUID (identifiant universel)</div>
+        <div class="example-code">
+<span class="kw">CREATE TABLE</span> sessions (
+  id         <span class="kw">CHAR</span>(<span class="num">36</span>) <span class="kw2">PRIMARY KEY</span> <span class="kw">DEFAULT</span> (<span class="kw">UUID</span>()),
+  user_id    <span class="kw">INT</span>      <span class="kw">NOT NULL</span>,
+  expires_at <span class="kw">DATETIME NOT NULL</span>
+);</div>
+      </div>
+      <div class="tips-grid">
+        <div class="tip"><div class="tip-icon">⚡</div><div class="tip-text"><strong>Index automatique</strong> — La PK crée automatiquement un index clusterisé (InnoDB) ou unique. Les recherches par PK sont donc extrêmement rapides.</div></div>
+        <div class="tip"><div class="tip-icon">🆔</div><div class="tip-text"><strong>INT vs UUID</strong> — INT AUTO_INCREMENT est plus compact et performant. UUID évite les collisions en environnement distribué mais occupe plus d'espace.</div></div>
+        <div class="tip"><div class="tip-icon">🔗</div><div class="tip-text"><strong>PK composite</strong> — Utilisée dans les tables de liaison many-to-many. Garantit qu'une même paire de valeurs n'apparaît pas deux fois.</div></div>
+        <div class="tip"><div class="tip-icon">⚠️</div><div class="tip-text"><strong>Ne jamais modifier</strong> — Changer la valeur d'une PK peut casser toutes les clés étrangères qui la référencent. Concevez-la stable dès le départ.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL FOREIGN KEY -->
+<div class="modal-overlay" id="modal-fk">
+  <div class="modal orange">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <span class="modal-keyword">FOREIGN KEY</span>
+        <span class="modal-badge">Contrainte</span>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-fk')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-intro">La <code>FOREIGN KEY</code> crée un lien entre deux tables en référençant la clé primaire d'une autre table. Elle garantit l'intégrité référentielle : impossible d'insérer une valeur qui n'existe pas dans la table parente.</p>
+      <div class="syntax-block">
+        <div class="syntax-label">Syntaxe avec actions en cascade</div>
+        <div class="syntax-code">
+<span class="kw2">FOREIGN KEY</span> (col_locale)<br>
+  <span class="kw">REFERENCES</span> table_parente(col_pk)<br>
+  <span class="kw">ON DELETE</span> [CASCADE | SET NULL | RESTRICT]<br>
+  <span class="kw">ON UPDATE</span> [CASCADE | SET NULL | RESTRICT]</div>
+      </div>
+      <div class="examples-title">// Exemples d'utilisation</div>
+      <div class="example-item">
+        <div class="example-desc">🔗 Relation simple commandes → clients</div>
+        <div class="example-code">
+<span class="kw">CREATE TABLE</span> commandes (
+  id        <span class="kw">INT PRIMARY KEY</span> AUTO_INCREMENT,
+  client_id <span class="kw">INT NOT NULL</span>,
+  montant   <span class="kw">DECIMAL</span>(<span class="num">10</span>,<span class="num">2</span>),
+  <span class="kw2">FOREIGN KEY</span> (client_id) <span class="kw">REFERENCES</span> clients(id)
+    <span class="kw">ON DELETE RESTRICT</span>  <span class="cm">-- empêche la suppression d'un client ayant des commandes</span>
+);</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">🗑️ Suppression en cascade (ON DELETE CASCADE)</div>
+        <div class="example-code">
+<span class="kw">CREATE TABLE</span> commentaires (
+  id      <span class="kw">INT PRIMARY KEY</span> AUTO_INCREMENT,
+  post_id <span class="kw">INT NOT NULL</span>,
+  contenu <span class="kw">TEXT</span>,
+  <span class="kw2">FOREIGN KEY</span> (post_id) <span class="kw">REFERENCES</span> posts(id)
+    <span class="kw">ON DELETE CASCADE</span>  <span class="cm">-- supprime les commentaires si le post est supprimé</span>
+);</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">🔄 Mise à null (ON DELETE SET NULL)</div>
+        <div class="example-code">
+<span class="kw">CREATE TABLE</span> taches (
+  id           <span class="kw">INT PRIMARY KEY</span> AUTO_INCREMENT,
+  assignee_id  <span class="kw">INT</span>,          <span class="cm">-- peut être NULL (non assignée)</span>
+  titre        <span class="kw">VARCHAR</span>(<span class="num">200</span>),
+  <span class="kw2">FOREIGN KEY</span> (assignee_id) <span class="kw">REFERENCES</span> employes(id)
+    <span class="kw">ON DELETE SET NULL</span>  <span class="cm">-- tâche devient non-assignée si l'employé part</span>
+);</div>
+      </div>
+      <div class="tips-grid">
+        <div class="tip"><div class="tip-icon">🛡️</div><div class="tip-text"><strong>Intégrité</strong> — La FK empêche d'insérer une commande pour un client inexistant, ou de supprimer un client qui a des commandes (RESTRICT).</div></div>
+        <div class="tip"><div class="tip-icon">⚡</div><div class="tip-text"><strong>Index recommandé</strong> — Indexez toujours la colonne FK. MySQL/InnoDB le fait automatiquement, mais d'autres SGBD ne le font pas.</div></div>
+        <div class="tip"><div class="tip-icon">🔄</div><div class="tip-text"><strong>CASCADE vs RESTRICT</strong> — CASCADE propage automatiquement, RESTRICT bloque. Choisissez selon le domaine métier : CASCADE pour les données dépendantes, RESTRICT pour les données importantes.</div></div>
+        <div class="tip"><div class="tip-icon">🗂️</div><div class="tip-text"><strong>Ordre de création</strong> — Créez toujours la table parente avant la table enfant. Pour supprimer, faites l'inverse (enfant d'abord).</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL UNIQUE -->
+<div class="modal-overlay" id="modal-unique">
+  <div class="modal orange">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <span class="modal-keyword">UNIQUE</span>
+        <span class="modal-badge">Contrainte</span>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-unique')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-intro">La contrainte <code>UNIQUE</code> garantit que toutes les valeurs d'une colonne (ou combinaison de colonnes) sont différentes. Contrairement à la PRIMARY KEY, une colonne UNIQUE peut contenir des valeurs NULL (plusieurs NULL sont tolérés dans la plupart des SGBD).</p>
+      <div class="syntax-block">
+        <div class="syntax-label">Syntaxe</div>
+        <div class="syntax-code">
+<span class="cm">-- Sur une colonne</span>
+email <span class="kw">VARCHAR</span>(<span class="num">100</span>) <span class="kw2">UNIQUE</span>,<br><br>
+<span class="cm">-- UNIQUE composite (combinaison unique)</span>
+<span class="kw">CONSTRAINT</span> uq_nom <span class="kw2">UNIQUE</span> (col1, col2),<br><br>
+<span class="cm">-- Ajout après création</span>
+<span class="kw">ALTER TABLE</span> t <span class="kw">ADD UNIQUE</span> (email);</div>
+      </div>
+      <div class="examples-title">// Exemples d'utilisation</div>
+      <div class="example-item">
+        <div class="example-desc">📧 Email unique par utilisateur</div>
+        <div class="example-code">
+<span class="kw">CREATE TABLE</span> utilisateurs (
+  id    <span class="kw">INT PRIMARY KEY</span> AUTO_INCREMENT,
+  email <span class="kw">VARCHAR</span>(<span class="num">100</span>) <span class="kw2">UNIQUE NOT NULL</span>,
+  nom   <span class="kw">VARCHAR</span>(<span class="num">50</span>)  <span class="kw">NOT NULL</span>
+);</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">🔑 Contrainte UNIQUE composite</div>
+        <div class="example-code">
+<span class="cm">-- Un utilisateur ne peut s'abonner qu'une fois à une newsletter</span>
+<span class="kw">CREATE TABLE</span> abonnements (
+  user_id      <span class="kw">INT</span>,
+  newsletter_id <span class="kw">INT</span>,
+  date_sub     <span class="kw">DATE</span>,
+  <span class="kw">CONSTRAINT</span> uq_user_newsletter <span class="kw2">UNIQUE</span> (user_id, newsletter_id)
+);</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">🔄 INSERT avec gestion de doublon (ON DUPLICATE KEY)</div>
+        <div class="example-code">
+<span class="cm">-- Utiliser la contrainte UNIQUE pour faire un UPSERT</span>
+<span class="kw">INSERT INTO</span> profils (user_id, bio, avatar_url)
+<span class="kw">VALUES</span> (<span class="num">42</span>, <span class="str">'Développeur passionné'</span>, <span class="str">'/img/42.jpg'</span>)
+<span class="kw">ON DUPLICATE KEY UPDATE</span>
+  bio       = <span class="kw">VALUES</span>(bio),
+  avatar_url = <span class="kw">VALUES</span>(avatar_url);</div>
+      </div>
+      <div class="tips-grid">
+        <div class="tip"><div class="tip-icon">🆚</div><div class="tip-text"><strong>UNIQUE vs PRIMARY KEY</strong> — Une table peut avoir plusieurs contraintes UNIQUE, mais une seule PK. UNIQUE accepte NULL, PK non.</div></div>
+        <div class="tip"><div class="tip-icon">⚡</div><div class="tip-text"><strong>Index automatique</strong> — Chaque contrainte UNIQUE crée automatiquement un index, ce qui accélère les recherches sur cette colonne.</div></div>
+        <div class="tip"><div class="tip-icon">🔢</div><div class="tip-text"><strong>NULL et UNIQUE</strong> — La plupart des SGBD (MySQL, PostgreSQL) autorisent plusieurs NULL dans une colonne UNIQUE car NULL ≠ NULL.</div></div>
+        <div class="tip"><div class="tip-icon">💡</div><div class="tip-text"><strong>UPSERT</strong> — La contrainte UNIQUE est souvent utilisée avec <code>ON DUPLICATE KEY UPDATE</code> (MySQL) ou <code>ON CONFLICT DO UPDATE</code> (PostgreSQL) pour faire des insertions conditionnelles.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOT NULL -->
+<div class="modal-overlay" id="modal-notnull">
+  <div class="modal orange">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <span class="modal-keyword">NOT NULL</span>
+        <span class="modal-badge">Contrainte</span>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-notnull')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-intro">La contrainte <code>NOT NULL</code> garantit qu'une colonne doit toujours contenir une valeur. Si aucune valeur n'est fournie lors d'un INSERT, la base retourne une erreur. C'est la contrainte la plus simple mais aussi l'une des plus importantes pour la qualité des données.</p>
+      <div class="syntax-block">
+        <div class="syntax-label">Syntaxe</div>
+        <div class="syntax-code">
+<span class="cm">-- À la création</span>
+nom <span class="kw">VARCHAR</span>(<span class="num">50</span>) <span class="kw2">NOT NULL</span>,<br><br>
+<span class="cm">-- Avec valeur par défaut</span>
+statut <span class="kw">VARCHAR</span>(<span class="num">20</span>) <span class="kw2">NOT NULL</span> <span class="kw">DEFAULT</span> <span class="str">'actif'</span>,<br><br>
+<span class="cm">-- Modifier une colonne existante</span>
+<span class="kw">ALTER TABLE</span> t <span class="kw">MODIFY</span> nom <span class="kw">VARCHAR</span>(<span class="num">50</span>) <span class="kw2">NOT NULL</span>;</div>
+      </div>
+      <div class="examples-title">// Exemples d'utilisation</div>
+      <div class="example-item">
+        <div class="example-desc">📋 Table avec colonnes obligatoires et optionnelles</div>
+        <div class="example-code">
+<span class="kw">CREATE TABLE</span> employes (
+  id           <span class="kw">INT PRIMARY KEY</span> AUTO_INCREMENT,
+  nom          <span class="kw">VARCHAR</span>(<span class="num">50</span>)  <span class="kw2">NOT NULL</span>,   <span class="cm">-- obligatoire</span>
+  prenom       <span class="kw">VARCHAR</span>(<span class="num">50</span>)  <span class="kw2">NOT NULL</span>,   <span class="cm">-- obligatoire</span>
+  telephone    <span class="kw">VARCHAR</span>(<span class="num">20</span>),              <span class="cm">-- optionnel (NULL ok)</span>
+  date_depart  <span class="kw">DATE</span>                      <span class="cm">-- NULL = encore en poste</span>
+);</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">⚙️ NOT NULL avec DEFAULT pour les champs techniques</div>
+        <div class="example-code">
+<span class="kw">CREATE TABLE</span> articles (
+  id         <span class="kw">INT PRIMARY KEY</span> AUTO_INCREMENT,
+  titre      <span class="kw">VARCHAR</span>(<span class="num">200</span>) <span class="kw2">NOT NULL</span>,
+  statut     <span class="kw">ENUM</span>(<span class="str">'brouillon'</span>,<span class="str">'publie'</span>) <span class="kw2">NOT NULL</span> <span class="kw">DEFAULT</span> <span class="str">'brouillon'</span>,
+  created_at <span class="kw">DATETIME</span>                    <span class="kw2">NOT NULL</span> <span class="kw">DEFAULT</span> <span class="kw">CURRENT_TIMESTAMP</span>
+);</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">🔍 Trouver les lignes avec des valeurs NULL</div>
+        <div class="example-code">
+<span class="cm">-- Contrôle qualité : lignes avec champs vides</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> clients
+<span class="kw">WHERE</span>  email   <span class="kw">IS NULL</span>
+  <span class="kw">OR</span>   telephone <span class="kw">IS NULL</span>
+  <span class="kw">OR</span>   adresse  <span class="kw">IS NULL</span>;</div>
+      </div>
+      <div class="tips-grid">
+        <div class="tip"><div class="tip-icon">🧮</div><div class="tip-text"><strong>NULL en calcul</strong> — Toute opération arithmétique avec NULL retourne NULL. Ex: <code>5 + NULL = NULL</code>. Utilisez <code>COALESCE(col, 0)</code> pour les totaux.</div></div>
+        <div class="tip"><div class="tip-icon">⚙️</div><div class="tip-text"><strong>DEFAULT</strong> — Combinez NOT NULL avec DEFAULT pour éviter les erreurs lors des INSERT qui n'incluent pas cette colonne.</div></div>
+        <div class="tip"><div class="tip-icon">📊</div><div class="tip-text"><strong>Sémantique NULL</strong> — NULL signifie "valeur inconnue ou absente". Parfois un NULL intentionnel est utile (ex: date_depart = NULL = encore en poste).</div></div>
+        <div class="tip"><div class="tip-icon">🔍</div><div class="tip-text"><strong>Comparaison NULL</strong> — <code>col = NULL</code> retourne toujours FAUX. Utilisez toujours <code>col IS NULL</code> ou <code>col IS NOT NULL</code> pour tester les NULL.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 1NF -->
+<div class="modal-overlay" id="modal-1nf">
+  <div class="modal cyan">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <span class="modal-keyword">1NF</span>
+        <span class="modal-badge">Première forme normale</span>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-1nf')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-intro">La <strong>Première Forme Normale (1NF)</strong> exige que chaque cellule contienne une valeur atomique (indivisible) et qu'il n'y ait pas de groupes répétitifs. C'est le prérequis de toute base de données relationnelle.</p>
+      <div class="syntax-block">
+        <div class="syntax-label">Règles de la 1NF</div>
+        <div class="syntax-code">
+<span class="kw">1.</span> Chaque cellule contient une seule valeur (atomique)<br>
+<span class="kw">2.</span> Pas de colonnes répétées (produit1, produit2, produit3…)<br>
+<span class="kw">3.</span> Pas de listes dans une cellule ("rouge, bleu, vert")<br>
+<span class="kw">4.</span> Chaque ligne est unique (une PK doit exister)</div>
+      </div>
+      <div class="examples-title">// Exemples : avant / après 1NF</div>
+      <div class="example-item">
+        <div class="example-desc">❌ Violation 1NF — Liste dans une cellule</div>
+        <div class="example-code">
+<span class="cm">-- commandes(id, client, produits)</span>
+<span class="cm">-- id=1, 'Alice', 'Laptop, Souris, Clavier'  ← INVALIDE</span>
+<span class="cm">-- Impossible de requêter un produit spécifique</span></div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">❌ Violation 1NF — Colonnes répétées</div>
+        <div class="example-code">
+<span class="cm">-- commandes(id, client, produit1, produit2, produit3)</span>
+<span class="cm">-- Que faire si le client commande 4 produits ?</span></div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">✅ Conforme 1NF — Une ligne par valeur</div>
+        <div class="example-code">
+<span class="cm">-- Table de liaison : une ligne = un produit d'une commande</span>
+<span class="kw">CREATE TABLE</span> lignes_commande (
+  commande_id <span class="kw">INT NOT NULL</span>,
+  produit_id  <span class="kw">INT NOT NULL</span>,
+  quantite    <span class="kw">INT NOT NULL</span>,
+  <span class="kw">PRIMARY KEY</span> (commande_id, produit_id)
+);
+<span class="cm">-- ✓ Chaque cellule = 1 valeur, recherche possible</span></div>
+      </div>
+      <div class="tips-grid">
+        <div class="tip"><div class="tip-icon">🔑</div><div class="tip-text"><strong>Identifiant unique</strong> — Toute table 1NF doit avoir une PRIMARY KEY qui identifie chaque ligne de façon unique.</div></div>
+        <div class="tip"><div class="tip-icon">💡</div><div class="tip-text"><strong>Colonnes répétées</strong> — Si vous avez produit1, produit2, produit3… c'est un signal fort que vous avez besoin d'une table séparée avec une FK.</div></div>
+        <div class="tip"><div class="tip-icon">📋</div><div class="tip-text"><strong>JSON/Arrays</strong> — Stocker du JSON dans une colonne peut violer la 1NF. Acceptable pour des données flexibles, mais au coût de la queryabilité SQL.</div></div>
+        <div class="tip"><div class="tip-icon">🧱</div><div class="tip-text"><strong>Fondation</strong> — Sans 1NF, les autres formes normales (2NF, 3NF) ne peuvent pas s'appliquer. C'est la brique de base.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 2NF -->
+<div class="modal-overlay" id="modal-2nf">
+  <div class="modal cyan">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <span class="modal-keyword">2NF</span>
+        <span class="modal-badge">Deuxième forme normale</span>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-2nf')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-intro">La <strong>Deuxième Forme Normale (2NF)</strong> exige que la table soit déjà en 1NF et que tous les attributs non-clés dépendent de la totalité de la clé primaire (pas seulement d'une partie). Elle ne s'applique que si la PK est composite.</p>
+      <div class="syntax-block">
+        <div class="syntax-label">Règle de la 2NF</div>
+        <div class="syntax-code">
+<span class="kw">1.</span> La table est en 1NF<br>
+<span class="kw">2.</span> Tout attribut non-clé dépend de <span class="kw">toute</span> la PK<br>
+<span class="cm">   → Pas de dépendance partielle</span><br>
+<span class="cm">   → Si PK = (A, B), chaque col doit dépendre de (A ET B)</span></div>
+      </div>
+      <div class="examples-title">// Exemples : avant / après 2NF</div>
+      <div class="example-item">
+        <div class="example-desc">❌ Violation 2NF — Dépendance partielle</div>
+        <div class="example-code">
+<span class="cm">-- PK composite : (commande_id, produit_id)</span>
+<span class="cm">-- commandes_produits(commande_id, produit_id, quantite, nom_produit, prix_produit)</span>
+<span class="cm">-- ❌ nom_produit et prix_produit dépendent SEULEMENT de produit_id</span>
+<span class="cm">--    pas de la paire (commande_id, produit_id) → redondance !</span></div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">✅ Conforme 2NF — Séparation des dépendances</div>
+        <div class="example-code">
+<span class="cm">-- Table 1 : infos produit (dépendent de produit_id seul)</span>
+<span class="kw">CREATE TABLE</span> produits (
+  id   <span class="kw">INT PRIMARY KEY</span>, nom <span class="kw">VARCHAR</span>(<span class="num">100</span>), prix <span class="kw">DECIMAL</span>(<span class="num">8</span>,<span class="num">2</span>)
+);
+<span class="cm">-- Table 2 : lignes de commande (quantite dépend de (cmd_id, prod_id))</span>
+<span class="kw">CREATE TABLE</span> lignes_commande (
+  commande_id <span class="kw">INT</span>, produit_id <span class="kw">INT</span>, quantite <span class="kw">INT</span>,
+  <span class="kw">PRIMARY KEY</span> (commande_id, produit_id)
+);</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">💡 Identifier une dépendance partielle</div>
+        <div class="example-code">
+<span class="cm">-- Question à se poser pour chaque colonne :</span>
+<span class="cm">-- "Cette valeur change-t-elle si je change UNE SEULE partie de la PK ?"</span>
+<span class="cm">-- Si OUI → dépendance partielle → violation 2NF → extraire dans une table</span></div>
+      </div>
+      <div class="tips-grid">
+        <div class="tip"><div class="tip-icon">🔑</div><div class="tip-text"><strong>PK simple</strong> — Si votre PK est sur une seule colonne, votre table est automatiquement en 2NF (pas de dépendance partielle possible).</div></div>
+        <div class="tip"><div class="tip-icon">🔄</div><div class="tip-text"><strong>Redondance</strong> — La violation 2NF cause des redondances : le nom d'un produit stocké dans chaque ligne de commande. Un UPDATE raté crée des incohérences.</div></div>
+        <div class="tip"><div class="tip-icon">✂️</div><div class="tip-text"><strong>Solution</strong> — Extraire les colonnes partiellement dépendantes dans leur propre table, et référencer avec une FK.</div></div>
+        <div class="tip"><div class="tip-icon">📊</div><div class="tip-text"><strong>Tables many-to-many</strong> — Les tables de liaison avec PK composite sont les candidates typiques à la vérification 2NF.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 3NF -->
+<div class="modal-overlay" id="modal-3nf">
+  <div class="modal cyan">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <span class="modal-keyword">3NF</span>
+        <span class="modal-badge">Troisième forme normale</span>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-3nf')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-intro">La <strong>Troisième Forme Normale (3NF)</strong> exige que la table soit en 2NF et qu'aucun attribut non-clé ne dépende d'un autre attribut non-clé (pas de dépendance transitive). C'est la cible standard en conception de bases relationnelles.</p>
+      <div class="syntax-block">
+        <div class="syntax-label">Règle de la 3NF</div>
+        <div class="syntax-code">
+<span class="kw">1.</span> La table est en 2NF<br>
+<span class="kw">2.</span> Aucune dépendance transitive :<br>
+<span class="cm">   A → B → C  (si C dépend de B qui dépend de A)</span><br>
+<span class="cm">   alors C ne doit pas être dans la même table que A</span></div>
+      </div>
+      <div class="examples-title">// Exemples : avant / après 3NF</div>
+      <div class="example-item">
+        <div class="example-desc">❌ Violation 3NF — Dépendance transitive</div>
+        <div class="example-code">
+<span class="cm">-- employes(id, nom, code_postal, ville, region)</span>
+<span class="cm">-- PK = id</span>
+<span class="cm">-- ❌ ville dépend de code_postal, pas directement de id</span>
+<span class="cm">-- ❌ region dépend de ville → chaîne : id → code_postal → ville → region</span></div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">✅ Conforme 3NF — Extraction des dépendances transitives</div>
+        <div class="example-code">
+<span class="kw">CREATE TABLE</span> codes_postaux (
+  code_postal <span class="kw">CHAR</span>(<span class="num">5</span>) <span class="kw">PRIMARY KEY</span>,
+  ville       <span class="kw">VARCHAR</span>(<span class="num">100</span>),
+  region      <span class="kw">VARCHAR</span>(<span class="num">50</span>)
+);
+<span class="kw">CREATE TABLE</span> employes (
+  id          <span class="kw">INT PRIMARY KEY</span>,
+  nom         <span class="kw">VARCHAR</span>(<span class="num">50</span>),
+  code_postal <span class="kw">CHAR</span>(<span class="num">5</span>) <span class="kw">REFERENCES</span> codes_postaux(code_postal)
+  <span class="cm">-- ville et region sont dans codes_postaux → plus de redondance</span>
+);</div>
+      </div>
+      <div class="example-item">
+        <div class="example-desc">💡 Autre exemple : commandes et infos client</div>
+        <div class="example-code">
+<span class="cm">-- ❌ commandes(id, client_id, client_nom, client_email, montant)</span>
+<span class="cm">-- client_nom et client_email dépendent de client_id, pas de l'id commande</span>
+
+<span class="cm">-- ✓ Solution 3NF</span>
+<span class="kw">CREATE TABLE</span> clients   (id, nom, email);
+<span class="kw">CREATE TABLE</span> commandes (id, client_id <span class="kw">REFERENCES</span> clients(id), montant);</div>
+      </div>
+      <div class="tips-grid">
+        <div class="tip"><div class="tip-icon">🔗</div><div class="tip-text"><strong>Dépendance transitive</strong> — Si A→B et B→C, alors A→C de façon transitive. C doit être extrait dans la table de B, pas dans celle de A.</div></div>
+        <div class="tip"><div class="tip-icon">♻️</div><div class="tip-text"><strong>Éviter la redondance</strong> — Sans 3NF, mettre à jour l'email d'un client oblige à modifier toutes ses commandes. Avec 3NF, une seule modification suffit.</div></div>
+        <div class="tip"><div class="tip-icon">⚖️</div><div class="tip-text"><strong>Dénormalisation</strong> — En prod, on accepte parfois des violations 3NF (colonnes calculées, copies) pour des raisons de performance. C'est un choix délibéré.</div></div>
+        <div class="tip"><div class="tip-icon">🎯</div><div class="tip-text"><strong>Objectif 3NF</strong> — Une base en 3NF minimise la redondance et les anomalies de mise à jour. C'est la cible de conception pour la majorité des applications.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN PAGE -->
+<div class="container">
+  <header>
+    <div class="tag">Référence Technique</div>
+    <h1>Fonda&shy;men&shy;taux<br><span>SQL</span></h1>
+    <p class="subtitle">// guide interactif des concepts essentiels</p>
+  </header>
+
+  <!-- 01 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <div class="dot" style="background:var(--accent)"></div>
+      <h2 class="section-title">Requêtes de base</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="cards" style="margin-bottom:16px">
+      <div class="card cyan" onclick="openModal('modal-select')">
+        <div class="card-keyword">SELECT</div>
+        <div class="card-desc">Lire des données depuis une ou plusieurs tables</div>
+        <div class="card-hint">↗ cliquer pour explorer</div>
+        <span class="card-arrow">↗</span>
+      </div>
+      <div class="card orange" onclick="openModal('modal-insert')">
+        <div class="card-keyword">INSERT INTO</div>
+        <div class="card-desc">Ajouter de nouvelles lignes dans une table</div>
+        <div class="card-hint">↗ cliquer pour explorer</div>
+        <span class="card-arrow">↗</span>
+      </div>
+      <div class="card green" onclick="openModal('modal-update')">
+        <div class="card-keyword">UPDATE</div>
+        <div class="card-desc">Modifier des lignes existantes d'une table</div>
+        <div class="card-hint">↗ cliquer pour explorer</div>
+        <span class="card-arrow">↗</span>
+      </div>
+      <div class="card purple" onclick="openModal('modal-delete')">
+        <div class="card-keyword">DELETE</div>
+        <div class="card-desc">Supprimer des lignes d'une table</div>
+        <div class="card-hint">↗ cliquer pour explorer</div>
+        <span class="card-arrow">↗</span>
+      </div>
+    </div>
+    <div class="code-block">
+<span class="cm">-- SELECT avec filtre et tri</span>
+<span class="kw">SELECT</span> nom, salaire <span class="kw">FROM</span> employes
+<span class="kw">WHERE</span> departement = <span class="str">'IT'</span> <span class="kw">AND</span> salaire > <span class="num">40000</span>
+<span class="kw">ORDER BY</span> salaire <span class="kw">DESC LIMIT</span> <span class="num">10</span>;
+
+<span class="cm">-- INSERT d'une nouvelle ligne</span>
+<span class="kw">INSERT INTO</span> employes (nom, departement, salaire)
+<span class="kw">VALUES</span> (<span class="str">'Alice Martin'</span>, <span class="str">'IT'</span>, <span class="num">52000</span>);
+
+<span class="cm">-- UPDATE ciblé avec WHERE</span>
+<span class="kw">UPDATE</span> employes <span class="kw">SET</span> salaire = salaire * <span class="num">1.1</span> <span class="kw">WHERE</span> anciennete > <span class="num">5</span>;
+
+<span class="cm">-- DELETE sécurisé</span>
+<span class="kw">DELETE FROM</span> employes <span class="kw">WHERE</span> id = <span class="num">42</span>;
+    </div>
+  </div>
+
+  <!-- 02 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <div class="dot" style="background:var(--accent2)"></div>
+      <h2 class="section-title">Jointures</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="join-grid" style="margin-bottom:16px">
+      <div class="join-card inner" onclick="openModal('modal-inner')">
+        <div class="venn">
+          <div class="circle c-left" style="background:rgba(0,229,255,0.25);border:2px solid var(--accent)"></div>
+          <div class="circle c-right" style="background:rgba(0,229,255,0.5);border:2px solid var(--accent)"></div>
+        </div>
+        <div class="join-label">INNER JOIN</div>
+        <div class="join-desc">Uniquement les lignes<br>correspondantes des 2 tables</div>
+        <div class="join-hint">↗ cliquer pour explorer</div>
+      </div>
+      <div class="join-card left" onclick="openModal('modal-left')">
+        <div class="venn">
+          <div class="circle c-left" style="background:rgba(255,107,53,0.5);border:2px solid var(--accent2)"></div>
+          <div class="circle c-right" style="background:rgba(255,107,53,0.15);border:2px solid var(--accent2)"></div>
+        </div>
+        <div class="join-label">LEFT JOIN</div>
+        <div class="join-desc">Toutes les lignes de gauche +<br>correspondances de droite</div>
+        <div class="join-hint">↗ cliquer pour explorer</div>
+      </div>
+      <div class="join-card right" onclick="openModal('modal-right')">
+        <div class="venn">
+          <div class="circle c-left" style="background:rgba(168,255,62,0.15);border:2px solid var(--accent3)"></div>
+          <div class="circle c-right" style="background:rgba(168,255,62,0.5);border:2px solid var(--accent3)"></div>
+        </div>
+        <div class="join-label">RIGHT JOIN</div>
+        <div class="join-desc">Toutes les lignes de droite +<br>correspondances de gauche</div>
+        <div class="join-hint">↗ cliquer pour explorer</div>
+      </div>
+    </div>
+    <div class="code-block orange-border">
+<span class="cm">-- INNER JOIN : commandes avec client existant</span>
+<span class="kw">SELECT</span> c.nom, cmd.date_commande, cmd.montant
+<span class="kw">FROM</span> clients c <span class="kw2">INNER JOIN</span> commandes cmd <span class="kw">ON</span> c.id = cmd.client_id;
+
+<span class="cm">-- LEFT JOIN : tous les clients, même sans commande</span>
+<span class="kw">SELECT</span> c.nom, <span class="kw">COUNT</span>(cmd.id) <span class="kw">AS</span> nb_commandes
+<span class="kw">FROM</span> clients c <span class="kw2">LEFT JOIN</span> commandes cmd <span class="kw">ON</span> c.id = cmd.client_id
+<span class="kw">GROUP BY</span> c.id;
+    </div>
+  </div>
+
+  <!-- 03 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <div class="dot" style="background:var(--accent3)"></div>
+      <h2 class="section-title">Fonctions d'agrégation</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="agg-row" style="margin-bottom:16px">
+      <div class="agg-chip" onclick="openModal('modal-count')"><div class="agg-fn">COUNT()</div><div class="agg-desc">nombre de lignes</div><div class="agg-hint">↗ explorer</div></div>
+      <div class="agg-chip" onclick="openModal('modal-sum')"><div class="agg-fn">SUM()</div><div class="agg-desc">somme totale</div><div class="agg-hint">↗ explorer</div></div>
+      <div class="agg-chip" onclick="openModal('modal-avg')"><div class="agg-fn">AVG()</div><div class="agg-desc">moyenne</div><div class="agg-hint">↗ explorer</div></div>
+      <div class="agg-chip" onclick="openModal('modal-minmax')"><div class="agg-fn">MIN()</div><div class="agg-desc">valeur minimale</div><div class="agg-hint">↗ explorer</div></div>
+      <div class="agg-chip" onclick="openModal('modal-minmax')"><div class="agg-fn">MAX()</div><div class="agg-desc">valeur maximale</div><div class="agg-hint">↗ explorer</div></div>
+    </div>
+    <div class="code-block green-border">
+<span class="kw">SELECT</span> departement, <span class="kw3">COUNT</span>(*) <span class="kw">AS</span> nb, <span class="kw3">AVG</span>(salaire) <span class="kw">AS</span> moy,
+       <span class="kw3">MIN</span>(salaire) <span class="kw">AS</span> min_sal, <span class="kw3">MAX</span>(salaire) <span class="kw">AS</span> max_sal, <span class="kw3">SUM</span>(salaire) <span class="kw">AS</span> total
+<span class="kw">FROM</span>   employes
+<span class="kw">GROUP BY</span> departement
+<span class="kw">HAVING</span> <span class="kw3">COUNT</span>(*) >= <span class="num">5</span>
+<span class="kw">ORDER BY</span> total <span class="kw">DESC</span>;
+    </div>
+  </div>
+
+  <!-- 04 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <div class="dot" style="background:var(--accent2)"></div>
+      <h2 class="section-title">Contraintes et clés</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="constraint-grid" style="margin-bottom:16px">
+      <div class="constraint-card" onclick="openModal('modal-pk')"><div class="constraint-icon">PK</div><div><div class="constraint-name">PRIMARY KEY</div><div class="constraint-desc">Identifiant unique de chaque ligne.<br>Jamais NULL, jamais dupliqué.</div><div class="constraint-hint">↗ cliquer pour explorer</div></div></div>
+      <div class="constraint-card" onclick="openModal('modal-fk')"><div class="constraint-icon">FK</div><div><div class="constraint-name">FOREIGN KEY</div><div class="constraint-desc">Référence une PK d'une autre table.<br>Garantit l'intégrité référentielle.</div><div class="constraint-hint">↗ cliquer pour explorer</div></div></div>
+      <div class="constraint-card" onclick="openModal('modal-unique')"><div class="constraint-icon">UQ</div><div><div class="constraint-name">UNIQUE</div><div class="constraint-desc">Valeurs distinctes dans la colonne.<br>Peut être NULL (contrairement à PK).</div><div class="constraint-hint">↗ cliquer pour explorer</div></div></div>
+      <div class="constraint-card" onclick="openModal('modal-notnull')"><div class="constraint-icon">NN</div><div><div class="constraint-name">NOT NULL</div><div class="constraint-desc">Interdit les valeurs NULL.<br>Force la présence d'une valeur.</div><div class="constraint-hint">↗ cliquer pour explorer</div></div></div>
+    </div>
+    <div class="code-block orange-border">
+<span class="kw">CREATE TABLE</span> commandes (
+  id        <span class="kw">INT</span>            <span class="kw2">PRIMARY KEY</span> AUTO_INCREMENT,
+  client_id <span class="kw">INT</span>            <span class="kw2">NOT NULL</span>,
+  reference <span class="kw">VARCHAR</span>(<span class="num">20</span>)   <span class="kw2">UNIQUE NOT NULL</span>,
+  montant   <span class="kw">DECIMAL</span>(<span class="num">10</span>,<span class="num">2</span>) <span class="kw2">NOT NULL</span>,
+  <span class="kw2">FOREIGN KEY</span> (client_id) <span class="kw">REFERENCES</span> clients(id) <span class="kw">ON DELETE</span> CASCADE
+);
+    </div>
+  </div>
+
+  <!-- 05 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <div class="dot" style="background:var(--accent)"></div>
+      <h2 class="section-title">Normalisation</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="norm-flow" style="margin-bottom:16px">
+      <div class="norm-step" onclick="openModal('modal-1nf')">
+        <div class="norm-num">1NF</div>
+        <div class="norm-name">Première forme</div>
+        <div class="norm-rule">Valeurs atomiques.<br>Pas de groupes répétitifs.<br>Chaque cellule = 1 valeur.</div>
+        <div class="norm-hint">↗ cliquer pour explorer</div>
+        <div class="norm-arrow">→</div>
+      </div>
+      <div class="norm-step" onclick="openModal('modal-2nf')">
+        <div class="norm-num">2NF</div>
+        <div class="norm-name">Deuxième forme</div>
+        <div class="norm-rule">1NF respectée.<br>Tous les attributs dépendent<br>entièrement de la PK.</div>
+        <div class="norm-hint">↗ cliquer pour explorer</div>
+        <div class="norm-arrow">→</div>
+      </div>
+      <div class="norm-step" onclick="openModal('modal-3nf')">
+        <div class="norm-num">3NF</div>
+        <div class="norm-name">Troisième forme</div>
+        <div class="norm-rule">2NF respectée.<br>Pas de dépendances<br>transitives entre colonnes.</div>
+        <div class="norm-hint">↗ cliquer pour explorer</div>
+      </div>
+    </div>
+    <div class="code-block">
+<span class="cm">-- ✗ Non normalisé : client_nom, client_email, produits_liste dans commandes</span>
+<span class="cm">-- ✓ Après 3NF — chaque table a un seul sujet</span>
+<span class="kw">CREATE TABLE</span> clients    (id, nom, email);
+<span class="kw">CREATE TABLE</span> produits   (id, nom, prix_unitaire);
+<span class="kw">CREATE TABLE</span> commandes  (id, client_id, date);
+<span class="kw">CREATE TABLE</span> lignes_cmd (commande_id, produit_id, quantite);
+    </div>
+  </div>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+  function openModal(id) {
+    document.getElementById(id).classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+    document.body.style.overflow = '';
+  }
+  document.querySelectorAll('.modal-overlay').forEach(o => {
+    o.addEventListener('click', e => { if (e.tar).
